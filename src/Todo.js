@@ -1,10 +1,18 @@
 import React from 'react'
-import PropTypes from 'prop-types';
+import PropTypes from 'prop-types'
 import './Todo.css';
 
-const Todo = props => {
+const TodoItem = props => {
+  const styles = props.todo.completed ? 'task done' : 'task'
+  
+  return (
+    <li id={props.todo._id} className={styles} onClick={props.updateTodo} >{props.todo.name} <span onClick={props.deleteTodo}>X</span> </li>
+  )
+}
+
+const TodoList = props => {
   const todos = props.todos.map( todo => (
-    <li className="task" key={todo._id}>{todo.name}<span>X</span></li>
+    <TodoItem todo={todo} updateTodo={props.updateTodo} deleteTodo={props.deleteTodo} key={todo._id}/>
   ))
 
   return (
@@ -12,8 +20,10 @@ const Todo = props => {
   )
 }
 
-Todo.propTypes = {
-  todos: PropTypes.arrayOf(PropTypes.object).isRequired
+TodoList.propTypes = {
+  todos: PropTypes.arrayOf(PropTypes.object).isRequired,
+  updateTodo: PropTypes.func.isRequired,
+  deleteTodo: PropTypes.func.isRequired
 }
 
-export default Todo;
+export default TodoList;

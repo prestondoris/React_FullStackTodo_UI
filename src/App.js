@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import axios from 'axios'
-import Todo from './Todo'
+import TodoList from './Todo'
 import './App.css';
 
 class App extends Component {
@@ -10,16 +10,11 @@ class App extends Component {
       todos: [],
       newTodo: ''
     }
-    this.createTodo = this.createTodo.bind(this);
     this.submitTodo = this.submitTodo.bind(this);
     this.postNewTodo = this.postNewTodo.bind(this);
-    this.completeTodo = this.completeTodo.bind(this);
+    this.updateTodo = this.updateTodo.bind(this);
     this.deleteTodo = this.deleteTodo.bind(this);
-  }
-
-  createTodo(todo) {
-    const todos = [...this.state.todos, todo]
-    this.setState({todos, newTodo:''})
+    this.baseURL = 'http://localhost:1000/'
   }
 
   submitTodo(e) {
@@ -28,20 +23,47 @@ class App extends Component {
     }
   }
 
-  completeTodo() {
+  updateTodo(e) {
+    e.preventDefault()
+    const clickedTodo = e.target
+    const todos = [...this.state.todos]
+    
+    if (clickedTodo.tagName === 'LI') {
+      const url = `${this.baseURL}api/todos/${clickedTodo.id}`
+      const todoInd = todos.findIndex(todo => todo._id === clickedTodo.id)
+      const newTodo = todos[todoInd]
+      const isCompleted = !newTodo.completed
+      
+      axios.put(url, {completed: isCompleted})
+        .then(todo => {
+          todos[todoInd] = todo.data
+          this.setState({ todos })
+        })
+        .catch(error => console.log(error))
 
+    }
   }
 
-  deleteTodo() {
+  deleteTodo(e) {
+    e.preventDefault()
+    const todoToRemove = e.target
+    const todos = this.state.todos.filter(todo => todo._id !== todoToRemove.parentElement.id)
+    if (todoToRemove.tagName === 'SPAN') {
+      const url = `${this.baseURL}api/todos/${todoToRemove.parentElement.id}`
 
+      axios.delete(url)
+        .then(res => this.setState({todos}))
+        .catch(error => console.log(error))
+    }
   }
 
   postNewTodo() {
-    const url = 'http://localhost:1000/api/todos';
+    const url = `${this.baseURL}api/todos`;
 
     axios.post(url, {name: this.state.newTodo})
       .then(todo => {
-        this.createTodo(todo.data);
+        const todos = [...this.state.todos, todo.data]
+        this.setState({ todos, newTodo: '' })
       })
       .catch(error => {
         console.log(error);
@@ -49,14 +71,9 @@ class App extends Component {
   }
 
   componentDidMount() {
-    fetch('http://localhost:1000/api/todos')
-      .then(data => {
-        console.log('the data is: ', data)
-        return data.json()
-      })
+    axios.get(`${this.baseURL}api/todos`)
       .then(todos => {
-        console.log(todos);
-        this.setState({ todos })
+        this.setState({ todos: todos.data })
       })
   }
 
@@ -79,7 +96,11 @@ class App extends Component {
               onKeyPress={this.submitTodo}
             /> 
           </section>
-          <Todo todos={this.state.todos}/>
+          <TodoList
+            todos={this.state.todos} 
+            updateTodo={this.updateTodo} 
+            deleteTodo={this.deleteTodo}
+          />
         </header>
       </div>
     )
